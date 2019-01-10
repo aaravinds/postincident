@@ -10,10 +10,9 @@
     * `chat:write:bot`
 1. Click 'Save Changes' and install the app
 
-#### Run locally or [![Remix on Glitch](https://cdn.glitch.com/2703baf2-b643-4da7-ab91-7ee2a2d00b5b%2Fremix-button.svg)](https://glitch.com/edit/#!/remix/slack-slash-command-and-dialogs-blueprint)
+#### Run locally
 1. Get the code
     * Either clone this repo and run `npm install`
-    * Or visit https://glitch.com/edit/#!/remix/slack-slash-command-and-dialogs-blueprint
 1. Set the following environment variables to `.env` (see `.env.sample`):
     * `SLACK_ACCESS_TOKEN`: Your app's `xoxp-` token (available on the Install App page)
     * `PORT`: The port that you want to run the web server on
@@ -26,7 +25,7 @@
 1. Go back to the app settings and click on Slash Commands.
 1. Click the 'Create New Command' button and fill in the following:
     * Command: `/postincident-new`
-    * Request URL: Your ngrok or Glitch URL + /commands
+    * Request URL: Your ngrok
     * Short description: `Post a message`
     * Usage hint: `[the problem you're having]`
 1. Save and reinstall the app
