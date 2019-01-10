@@ -6,7 +6,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const qs = require('querystring');
 const debug = require('debug')('slash-command-template:index');
-PagerDuty = require('./pagerduty')
+PagerDuty = require('./PagerDuty')
 const app = express();
 
 var channelList;
