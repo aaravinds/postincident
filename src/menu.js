@@ -1,5 +1,8 @@
 const qs = require('querystring');
 const axios = require('axios');
+var async = require('async');
+
+var channelList;
 
 const menu = {
   items: [
@@ -219,7 +222,24 @@ const menu = {
       id: 'Page Cannot be Displayed',
       name: 'Page Cannot be Displayed',
     },
-  ],
+  ],  pagerDutyService: [
+        {
+          id: 'PFBSMXG',
+          name: 'CX service',
+        },
+        {
+          id: 'PSWVPXL',
+          name: 'PX service',
+        },
+        {
+          id: 'PW5GQNO',
+          name: 'Enterprise Data service',
+        },
+        {
+          id: 'POK7OIY',
+          name: 'Enterprise General systems',
+        },
+      ],
   listOfApplication() {
     return menu.Application.map(i => ({ label: i.name, value: i.id }));
   },
@@ -235,8 +255,10 @@ const menu = {
   listOfBridge() {
       return menu.Bridge.map(i => ({ label: i.name, value: i.id }));
   },
+  listOfPagerDutyService() {
+      return menu.pagerDutyService.map(i => ({ label: i.name, value: i.id }));
+  },
   listOfPagerDutyTeam() {
-  console.log('Pagerduty',menu.pagerDuty.map(i => ({ label: i.name, value: i.id })));
     return menu.pagerDuty.map(i => ({ label: i.name, value: i.id }));
   },
   listOfIssueType() {
@@ -259,10 +281,12 @@ const menu = {
    const body = {token: process.env.SLACK_ACCESS_TOKEN};
     axios.post('https://slack.com/api/conversations.list', qs.stringify(body))
       .then(function(response){
-        const channelList = response.data.channels;
-        return channelList.map(i => ({ label: i.name, value: i.id }));
+         channelList = response.data.channels.map(i => ({ label: i.name, value: i.id }));
+         return channelList;
+      }).catch((err) => {
+        res.sendStatus(500);
       });
-  },
+  }
 };
 
 module.exports = menu;
