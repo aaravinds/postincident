@@ -6,8 +6,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const qs = require('querystring');
 const debug = require('debug')('slash-command-template:index');
-PagerDuty = require('./PagerDuty')
+PagerDuty = require('./PagerDuty');
 const app = express();
+const apiUrl = 'https://slack.com/api';
 
 var channelList;
 var priority;
@@ -15,6 +16,7 @@ var strMsg="";
 var pager, PagerDuty;
 var SLACK_DIALOG_SUBMISSION='dialog_submission'
 var SLACK_POST_NEW_MESSAGE='/postcriticalincident-new'
+var SLACK_GET_ONBOARD_DETAILS='/onboard-details'
 var SLACK_DIALOG_POSTMESSAGE_CALLBACK_ID='post-message'
 var SLACK_DIALOG_PAGERALERT_CALLBACK_ID='pager-alert'
 var SLACK_MESSAGE_ACTION='message_action'
@@ -105,7 +107,7 @@ app.post('/commands', (req, res) => {
 
 
     // open the dialog by calling dialogs.open method and sending the payload
-    axios.post('https://slack.com/api/dialog.open', qs.stringify(dialog))
+    axios.post(`${apiUrl}/dialog.open`, qs.stringify(dialog))
       .then((result) => {
         debug('dialog.open: %o', result.data);
         console.log('dialog.open: %o', result.data);
@@ -122,6 +124,66 @@ app.post('/commands', (req, res) => {
   }
 });
 
+/*
+ * Endpoint to receive /getpagerdetails slash command from Slack.
+ * Checks verification token and opens a dialog to capture more info.
+ */
+app.post('/OnBoard', (req, res) => {
+  // extract the verification token, slash command text,
+  // and trigger ID from payload
+  const { token, text, trigger_id,command } = req.body;
+
+
+  // check that the verification token matches expected value
+  if (token === process.env.SLACK_VERIFICATION_TOKEN) {
+        if (command === SLACK_GET_ONBOARD_DETAILS) {
+    // create the dialog payload - includes the dialog structure, Slack API token,
+    // and trigger ID
+    var match;
+     let message = {};
+       if (req.body.text) {
+       console.log(req.body);
+       }
+         const commandText = req.body.text;
+
+        /* if(! /^\d+$/.test(commandText)) { // not a digit
+           res.send(':crying_cat_face:U R DOING IT WRONG. Enter an Application like NMConnect,CRM,ClientWebsite');
+           return;
+         }*/
+        match = /^NMConnect *$/.exec(commandText);
+        if (match) {
+            return FetchDetails();
+        }else
+        {
+        return res.send(':crying_cat_face:Incorrect app name. Enter the app name Eg: NMConnect');
+
+        }
+        function FetchDetails() {
+            //return Promise.resolve({
+              return res.json({response_type: 'ephemeral',
+                text: [
+                    'Place Irequest for the following items to get complete access to NMConnect application',
+                    'Active Directory Group :',
+                    '• `AG-NMLV-HUB`',
+                    '• `ADG-TFS-SERVER`',
+                    '• `ADG-RAPID-SQL`',
+                    'Unix Directory Group :',
+                     '• `BIIP-ODS`',
+                     '• `BIIP-ODS12`',
+                     '• `UNIX-XXX-YY`',
+                    'Application Function(AppFunc) :',
+                     '• `NMCPORT(000)`',
+                     '• `NMCPORT(010)`',
+                     '• `NMCPORT(003)`',
+                ].join('\n'),
+            });
+        }
+     };
+  } else {
+        debug('Verification token mismatch');
+        res.sendStatus(500);
+  }
+});
 /**************************************************************************
  * Endpoint to receive the dialog submission. Checks the verification token
  * and post the message
@@ -147,7 +209,7 @@ app.post('/interactive-component', (req, res) => {
                     { priority = 'Priority 2'
                     }
 
-                      axios.post('https://slack.com/api/chat.postMessage', qs.stringify({
+                      axios.post(`${apiUrl}/chat.postMessage`, qs.stringify({
                          token: process.env.SLACK_ACCESS_TOKEN,
                          channel: body.submission.Channels,
                          text: `*${body.submission.title}*`,
@@ -188,7 +250,6 @@ app.post('/interactive-component', (req, res) => {
                          ]) ,
                        })).then((result) => {
                          debug('sendConfirmation: %o', result);
-                         console.log('result.data',result.data);
                        }).catch((err) => {
                          debug('sendConfirmation error: %o', err);
                          console.error(err);
@@ -220,11 +281,12 @@ app.post('/interactive-component', (req, res) => {
                              return response;
                          })
                          .then(function(response){
+                         console.log('incident',response);
                                       if (response.incident_number){
-                                                   axios.post('https://slack.com/api/chat.postMessage', qs.stringify({
+                                                   axios.post(`${apiUrl}/chat.postMessage`, qs.stringify({
                                                    token: process.env.SLACK_ACCESS_TOKEN,
                                                    channel: body.channel.name,
-                                                   text: `*Pager Alert Triggered*`,//`${body.submission.title}`,
+                                                   text: `*Pager Alert Triggered and assigned to ${response.service.summary}*`,//`${body.submission.title}`,
                                                    attachments: JSON.stringify([
                                                     {
                                                       "title": `Pagerduty Incident# ${response.incident_number}:${body.submission.title}`,
@@ -298,7 +360,7 @@ app.post('/interactive-component', (req, res) => {
 
 
                  // open the dialog by calling dialogs.open method and sending the payload
-                 axios.post('https://slack.com/api/dialog.open', qs.stringify(message_action_dialog))
+                 axios.post(`${apiUrl}/dialog.open`, qs.stringify(message_action_dialog))
                    .then((result) => {
                      debug('dialog.open: %o', result.data);
                      console.log('dialog.open: %o', result.data);

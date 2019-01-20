@@ -102,6 +102,13 @@ class PagerDuty {
     getOnCallPersonelList() {
         const options = {
             url: `${this.serverURL}/oncalls`,
+            qs: {
+                time_zone: 'UTC',
+                include: ['schedules'],
+                escalation_policy_ids: ['P757YYS'],
+                earliest: true,
+                sort_by: 'escalation_level:asc',
+                },
             method: "GET",
             headers: {
               Accept: "application/vnd.pagerduty+json;version=2",
